@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1300, initial-scale=1.0">
+    <title>FIDZNET STUDIO | Digital Architect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg: #020204;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.4);
+            --text: #ffffff;
+            --text-dim: #888899;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { 
+            margin: 0; overflow: hidden; background-color: var(--bg); 
+            font-family: 'Space Grotesk', sans-serif; color: var(--text);
+            width: 100%; height: 100dvh; font-size: 18px; /* Ukuran dasar diperbesar */
+        }
+
+        /* Scanline Overlay */
+        body::before {
+            content: ""; position: fixed; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.01));
+            background-size: 100% 3px, 3px 100%; z-index: 5; pointer-events: none;
+        }
+
+        /* Header */
+        .top-nav {
+            position: fixed; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 40px 80px; z-index: 100; box-sizing: border-box;
+        }
+        .logo { font-weight: 700; letter-spacing: 6px; font-size: 1.1rem; cursor: pointer; color: white; text-decoration: none; }
+        .social-icons { display: flex; gap: 30px; }
+        .social-icons a { color: var(--text); font-size: 1.6rem; transition: 0.3s; opacity: 0.6; }
+        .social-icons a:hover { color: var(--accent); opacity: 1; transform: translateY(-3px); }
+
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+        .copyright {
+            position: fixed; bottom: 40px; left: 80px; z-index: 10;
+            font-size: 0.75rem; letter-spacing: 3px; color: var(--text-dim);
+            text-transform: uppercase; font-weight: 500;
+        }
+
+        /* Hero Text */
+        .hero-text { position: absolute; left: 80px; top: 50%; transform: translateY(-50%); z-index: 10; pointer-events: none; }
+        .hero-text span { letter-spacing: 15px; color: var(--accent); font-weight: 700; font-size: 1rem; }
+        .hero-text h1 { font-family: 'Syncopate'; font-size: 6.5rem; margin: 20px 0; line-height: 0.85; letter-spacing: -3px; }
+
+        /* Side Menu - Diperbesar */
+        .side-menu {
+            position: fixed; right: 40px; top: 50%;
+            transform: translateY(-50%); display: flex; flex-direction: column;
+            gap: 40px; z-index: 100; align-items: flex-end;
+        }
+        .menu-item {
+            writing-mode: vertical-rl; text-transform: uppercase;
+            font-size: 0.9rem; letter-spacing: 5px; color: var(--text);
+            cursor: pointer; transition: 0.4s; font-weight: 700;
+            padding-bottom: 20px; border-bottom: 4px solid var(--accent-glow);
+            white-space: nowrap;
+        }
+        .menu-item:hover { color: var(--accent); border-bottom: 4px solid var(--accent); letter-spacing: 8px; }
+
+        /* Panels Styles */
+        .panel {
+            position: fixed; inset: 0; width: 100vw; height: 100dvh;
+            z-index: 200; display: flex; flex-direction: column;
+            padding: 80px; box-sizing: border-box; 
+            visibility: hidden; opacity: 0; 
+            backdrop-filter: blur(80px); -webkit-backdrop-filter: blur(80px);
+            transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow-y: auto; background: rgba(2, 2, 4, 0.97);
+        }
+        .panel.active { visibility: visible; opacity: 1; }
+        .panel-content { max-width: 1300px; margin: 40px auto; width: 100%; position: relative; z-index: 10; }
+        
+        h2 { font-family: 'Syncopate'; font-size: 3rem; margin-bottom: 40px; letter-spacing: 15px; border-bottom: 1px solid var(--glass-border); padding-bottom: 25px; color: var(--accent); text-transform: uppercase; }
+
+        /* --- PROFILE SECTION --- */
+        .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 70px; }
+        .avatar-wrapper { position: relative; width: 300px; height: 300px; display: flex; justify-content: center; align-items: center; }
+        .avatar-pulse {
+            position: absolute; width: 100%; height: 100%;
+            border-radius: 50%; background: var(--accent);
+            opacity: 0.2; animation: pulseRadar 3s ease-out infinite;
+        }
+        @keyframes pulseRadar {
+            0% { transform: scale(0.6); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+        .avatar-container { position: relative; width: 250px; height: 250px; z-index: 2; }
+        .my-photo {
+            width: 210px; height: 210px; border-radius: 50%; object-fit: cover;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            border: 6px solid var(--bg); box-shadow: 0 0 40px var(--accent-glow);
+            z-index: 5; background: #111;
+        }
+        .rotating-badge { position: absolute; width: 100%; height: 100%; animation: spin 20s linear infinite; }
+        .rotating-badge svg { fill: var(--accent); width: 100%; height: 100%; font-weight: bold; font-size: 11px; text-transform: uppercase; letter-spacing: 4px; }
+
+        .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 50px; }
+        .info-card {
+            background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.01));
+            border: 1px solid var(--glass-border); padding: 50px; border-radius: 30px;
+            transition: 0.5s; position: relative; overflow: hidden;
+            backdrop-filter: blur(15px);
+        }
+        .info-card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 25px 50px rgba(99, 102, 241, 0.15); }
+        .info-card h3 { font-family: 'Syncopate'; font-size: 1rem; color: var(--accent); margin-bottom: 30px; letter-spacing: 5px; display: flex; align-items: center; gap: 15px; }
+        .info-card p { font-size: 1.05rem; line-height: 1.9; color: #ccc; text-align: justify; }
+
+        /* Animation Background Icons */
+        .bg-icons-layer { position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.25; overflow: hidden; }
+        .float-code { position: absolute; color: var(--accent); font-size: 3rem; animation: floatUp 15s linear infinite; opacity: 0; }
+        
+        @keyframes floatUp {
+            0% { transform: translateY(110%) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-20%) rotate(360deg); opacity: 0; }
+        }
+
+        /* Service Grids */
+        .service-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; }
+        .service-card { background: var(--glass); border: 1px solid var(--glass-border); padding: 40px; border-radius: 20px; transition: 0.4s; text-align: center; position: relative; overflow: hidden; }
+        .service-card:hover { transform: translateY(-8px); border-color: var(--accent); background: rgba(255,255,255,0.07); }
+        .service-card i { font-size: 3.5rem; color: var(--accent); margin-bottom: 25px; }
+        .service-card h3 { font-family: 'Syncopate'; font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 2px; }
+        .service-card p { font-size: 0.9rem; color: #aaa; line-height: 1.6; }
+
+        .btn-order { width: 100%; background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; letter-spacing: 2px; margin-top: 15px; }
+        .btn-order:hover { background: #fff; color: #000; }
+        .custom-select { width: 100%; background: #000; color: #fff; border: 1px solid var(--glass-border); padding: 12px; border-radius: 6px; margin: 15px 0; outline: none; }
+
+        .back-btn { position: absolute; top: 50px; right: 80px; cursor: pointer; letter-spacing: 6px; font-weight: bold; font-size: 1rem; color: var(--accent); z-index: 1000; }
+        
+        #loader { position: fixed; inset: 0; background: #000; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .progress-bar { width: 250px; height: 2px; background: #111; margin-top: 30px; }
+        .progress-inner { height: 100%; background: var(--accent); width: 0%; transition: 1s; }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div style="letter-spacing: 20px; font-size: 0.8rem; font-weight: bold;">FIDZNET STUDIO</div>
+        <div class="progress-bar"><div class="progress-inner" id="bar"></div></div>
+    </div>
+
+    <header class="top-nav">
+        <a href="#" class="logo" onclick="location.reload()">FIDZNET STUDIO</a>
+        <div class="social-icons">
+            <a href="https://github.com/khafidza48q-rgb"><i class="fab fa-github"></i></a>
+            <a href="https://instagram.com/ha_fidzz_004"><i class="fab fa-instagram"></i></a>
+            <a href="https://wa.me/6283168213786"><i class="fab fa-whatsapp"></i></a>
+        </div>
+    </header>
+
+    <div id="canvas-container"></div>
+    <div class="copyright">© 2026 FIDZNET STUDIO | ARCHITECTING THE FUTURE</div>
+
+    <div class="hero-text">
+        <span>PREMIUM DIGITAL ARCHITECT</span>
+        <h1>MODERN<br>STUDIO</h1>
+    </div>
+
+    <div class="side-menu">
+        <div class="menu-item" onclick="openPanel('profile')">Profile</div>
+        <div class="menu-item" onclick="openPanel('smm')">Social Boost</div>
+        <div class="menu-item" onclick="openPanel('academic')">Academic</div>
+        <div class="menu-item" onclick="openPanel('program')">Development</div>
+    </div>
+
+    <!-- PANEL PROFILE -->
+    <div class="panel" id="panel-profile">
+        <div class="bg-icons-layer" id="profile-icons"></div>
+        <div class="back-btn" onclick="closePanels()">CLOSE [X]</div>
+        <div class="panel-content">
+            <div class="profile-header">
+                <div class="avatar-wrapper">
+                    <div class="avatar-pulse"></div>
+                    <div class="avatar-container">
+                        <div class="rotating-badge">
+                            <svg viewBox="0 0 200 200">
+                                <path id="textP" d="M 100, 100 m -80, 0 a 80,80 0 1,1 160,0 a 80,80 0 1,1 -160,0" fill="transparent"/>
+                                <text><textPath href="#textP">Khafidz • Creative Developer • Digital Architect • Modern Thinker •</textPath></text>
+                            </svg>
+                        </div>
+                        <img src="d:\Tugas Hafidz\portfolio 3D\foto hafidz.png" alt="Khafidz" class="my-photo" onerror="this.src='https://ui-avatars.com/api/?name=Khafidz&background=6366f1&color=fff&size=210'">
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-grid">
+                <div class="info-card">
+                    <h3><i class="fas fa-user-astronaut"></i> BIOGRAPHY</h3>
+                    <p>Halo, saya <strong>Khafidz</strong>. Seorang Digital Architect yang berdedikasi membangun infrastruktur digital masa depan dengan sentuhan estetika premium. Saya percaya bahwa teknologi bukan hanya tentang fungsi, melainkan tentang bagaimana kita menciptakan pengalaman yang elegan dan efisien bagi setiap pengguna. Dengan pengalaman bertahun-tahun di industri kreatif, saya fokus pada penggabungan logika pemrograman yang kuat dengan desain visual yang imersif.</p>
+                </div>
+                <div class="info-card">
+                    <h3><i class="fas fa-rocket"></i> VISION</h3>
+                    <p>Visi saya adalah menghadirkan standar baru dalam dunia pengembangan digital di Indonesia. Melalui <strong>Fidznet Studio</strong>, saya berkomitmen untuk membantu bisnis dan individu bertransformasi secara digital dengan solusi yang cerdas, skalabel, dan berorientasi pada hasil nyata. Saya mengintegrasikan teknologi terbaru dengan pemahaman mendalam tentang pasar untuk memastikan setiap proyek memberikan dampak maksimal bagi klien kami.</p>
+                </div>
+                <div class="info-card">
+                    <h3><i class="fas fa-briefcase"></i> EXPERIENCE</h3>
+                    <p>Sebagai founder Fidznet Studio, saya telah mengelola berbagai proyek berskala besar, mulai dari sistem SMM otomatis hingga arsitektur web korporat yang kompleks. Keahlian saya mencakup pengembangan full-stack menggunakan Python dan JavaScript, perancangan basis data yang efisien, serta strategi pemasaran digital yang berbasis data untuk platform seperti Instagram, TikTok, dan Facebook.</p>
+                </div>
+                <div class="info-card">
+                    <h3><i class="fas fa-code"></i> TECH STACK</h3>
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px;">
+                        <span style="border: 1px solid var(--accent); padding: 8px 20px; border-radius: 5px; font-size: 0.8rem;">PYTHON</span>
+                        <span style="border: 1px solid var(--accent); padding: 8px 20px; border-radius: 5px; font-size: 0.8rem;">JAVASCRIPT</span>
+                        <span style="border: 1px solid var(--accent); padding: 8px 20px; border-radius: 5px; font-size: 0.8rem;">NODE JS</span>
+                        <span style="border: 1px solid var(--accent); padding: 8px 20px; border-radius: 5px; font-size: 0.8rem;">GITHUB</span>
+                        <span style="border: 1px solid var(--accent); padding: 8px 20px; border-radius: 5px; font-size: 0.8rem;">CSS ANIMATION</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL ACADEMIC -->
+    <div class="panel" id="panel-academic">
+        <div class="back-btn" onclick="closePanels()">CLOSE [X]</div>
+        <div class="panel-content">
+            <h2>ACADEMIC WRITING</h2>
+            <div class="profile-grid">
+                <div class="info-card">
+                    <h3><i class="fas fa-file-alt"></i> JASA MAKALAH</h3>
+                    <p>Penyusunan makalah riset profesional, original, dan mendalam dengan sitasi standar internasional. Kami menjamin kualitas tulisan yang akademis dan bebas plagiasi.</p>
+                    <button class="btn-order" onclick="window.open('https://wa.me/6283168213786?text=Halo, saya ingin pesan Makalah')">ORDER NOW</button>
+                </div>
+                <div class="info-card">
+                    <h3><i class="fas fa-graduation-cap"></i> BIMBINGAN SKRIPSI</h3>
+                    <p>Konsultasi bimbingan skripsi dari Bab 1 hingga Bab 5. Kami membantu dalam pengolahan data, perancangan sistem, hingga persiapan sidang akhir Anda.</p>
+                    <button class="btn-order" onclick="window.open('https://wa.me/083168213786?text=Halo, saya ingin bimbingan Skripsi')">CONSULTATION</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL DEVELOPMENT -->
+    <div class="panel" id="panel-program">
+        <div class="bg-icons-layer" id="dev-icons"></div>
+        <div class="back-btn" onclick="closePanels()">CLOSE [X]</div>
+        <div class="panel-content">
+            <h2>DEVELOPMENT</h2>
+            <div class="service-grid">
+                <div class="service-card"><i class="fab fa-python"></i><h3>PYTHON</h3><p>Automation script & API Development.</p></div>
+                <div class="service-card"><i class="fab fa-js"></i><h3>WEB APP</h3><p>Premium interactive web solutions.</p></div>
+                <div class="service-card"><i class="fab fa-github"></i><h3>GITHUB</h3><p>Version control & deployment system.</p></div>
+                <div class="service-card"><i class="fas fa-code"></i><h3>UI ARCHITECT</h3><p>Modern & aesthetic interface design.</p></div>
+            </div>
+            <div style="margin-top: 30px;">
+                 <button class="btn-order" style="width: 300px; display: block; margin: 0 auto;" onclick="window.open('https://wa.me/6283168213786?text=Halo, saya ingin buat Program/Web')">MULAI PROYEK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL SMM -->
+    <div class="panel" id="panel-smm">
+        <div class="back-btn" onclick="closePanels()">CLOSE [X]</div>
+        <div class="panel-content">
+            <h2>SOCIAL BOOST</h2>
+            <div class="service-grid">
+                <div class="service-card"><i class="fab fa-instagram"></i><h3>INSTAGRAM</h3><select class="custom-select" id="i1"><option>Followers</option><option>Likes</option></select><button class="btn-order" onclick="orderSMM('Instagram', 'i1')">ORDER</button></div>
+                <div class="service-card"><i class="fab fa-tiktok"></i><h3>TIKTOK</h3><select class="custom-select" id="i2"><option>Followers</option><option>Likes</option></select><button class="btn-order" onclick="orderSMM('TikTok', 'i2')">ORDER</button></div>
+                <div class="service-card"><i class="fab fa-facebook"></i><h3>FACEBOOK</h3><select class="custom-select" id="i3"><option>Followers</option><option>Likes</option></select><button class="btn-order" onclick="orderSMM('Facebook', 'i3')">ORDER</button></div>
+                <div class="service-card"><i class="fab fa-youtube"></i><h3>YOUTUBE</h3><select class="custom-select" id="i4"><option>Subscribers</option></select><button class="btn-order" onclick="orderSMM('YouTube', 'i4')">ORDER</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap"> { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } } </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        let scene, camera, renderer, particles;
+
+        init();
+        animate();
+
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            camera.position.z = 400;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const geo = new THREE.BufferGeometry();
+            const posArr = new Float32Array(150 * 3);
+            for(let i=0; i<150*3; i++) posArr[i] = (Math.random()-0.5)*800;
+            geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+            particles = new THREE.Points(geo, new THREE.PointsMaterial({ size: 3, color: 0x6366f1 }));
+            scene.add(particles);
+
+            // Generate Icons for Profile & Dev Panels
+            const iconSets = ['fa-python', 'fa-github', 'fa-js', 'fa-css3-alt', 'fa-terminal', 'fa-database', 'fa-code'];
+            
+            function addIcons(containerId) {
+                const container = document.getElementById(containerId);
+                for(let i=0; i<15; i++) {
+                    const icon = document.createElement('i');
+                    icon.className = `fab ${iconSets[Math.floor(Math.random()*iconSets.length)]} float-code`;
+                    if(icon.className.includes('undefined')) icon.className = 'fas fa-code float-code';
+                    icon.style.left = Math.random() * 95 + 'vw';
+                    icon.style.animationDelay = Math.random() * 12 + 's';
+                    icon.style.fontSize = (Math.random() * 3 + 2) + 'rem';
+                    container.appendChild(icon);
+                }
+            }
+            
+            addIcons('profile-icons');
+            addIcons('dev-icons');
+
+            setTimeout(() => {
+                document.getElementById('bar').style.width = '100%';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 500);
+            }, 1200);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particles.rotation.y += 0.001;
+            renderer.render(scene, camera);
+        }
+
+        window.openPanel = function(id) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('panel-' + id).classList.add('active');
+        }
+        window.closePanels = function() {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        }
+        window.orderSMM = function(p, s) {
+            window.open(`https://wa.me/6283168213786?text=Order ${p} ${document.getElementById(s).value}`);
+        }
+    </script>
+</body>
+</html>
